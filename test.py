@@ -11,44 +11,21 @@ import seaborn as sns
 # Load dataset
 file_path = "respiratory_sex_20250226.csv"  # Change this to your file path
 df = pd.read_csv(file_path)
-# Convert 'WeekBeginning' to datetime for time-based analysis
+# Convert 'WeekBeginning' to datetime
 df['WeekBeginning'] = pd.to_datetime(df['WeekBeginning'], format='%Y%m%d')
-# Select the top recurring viruses
+# Select top 5 viruses
 top_viruses = df['Pathogen'].value_counts().head(5).index
 df_top_viruses = df[df['Pathogen'].isin(top_viruses)]
-# 🔹 1. Box Plot: Identifying Variations & Outliers
+# Group data by Pathogen and sum the total cases
+virus_counts = df_top_viruses.groupby('Pathogen')['RatePer100000'].sum().reset_index()
+# 🔹 Bar Chart: Distribution of Virus Cases with Variations
 plt.figure(figsize=(12, 6))
-sns.boxplot(data=df_top_viruses, x="Pathogen", y="RatePer100000", hue="Pathogen", palette="coolwarm")
-plt.legend(title="Virus", bbox_to_anchor=(1.05, 1), loc='upper left')
-plt.title("Variation in Virus Cases (Box Plot)")
+sns.barplot(data=virus_counts, x="Pathogen", y="RatePer100000", palette="viridis", edgecolor="black")
+plt.title("Total Cases of Top 5 Viruses")
 plt.xlabel("Virus Type")
-plt.ylabel("Rate per 100,000")
-plt.grid()
-plt.show()
-# 🔹 2. Scatter Plot: Highlighting Unusual Variations Over Time
-plt.figure(figsize=(14, 7))
-sns.boxplot(data=df_top_viruses, x="Pathogen", y="RatePer100000", hue=None, palette="coolwarm", legend=False)
-plt.title("Unusual Virus Case Variations Over Time")
-plt.xlabel("Time (Weeks)")
-plt.ylabel("Rate per 100,000")
+plt.ylabel("Total Rate per 100,000")
 plt.xticks(rotation=45)
-plt.legend(title="Virus", bbox_to_anchor=(1.05, 1), loc='upper left')
-plt.grid()
-plt.show()
-virus_counts = df['Pathogen'].value_counts()
-# Display top recurring viruses
-print("Top Recurring Viruses:\n", virus_counts.head(10))
-# Analyze trends over time
-df['WeekBeginning'] = pd.to_datetime(df['WeekBeginning'], format='%Y%m%d')  # Convert to datetime
-virus_trends = df.groupby(['WeekBeginning', 'Pathogen']).size().unstack().fillna(0)
-# Plot trends for the most common viruses
-top_viruses = virus_counts.head(5).index  # Select top 5 viruses
-virus_trends[top_viruses].plot(figsize=(12, 6), linewidth=2)
-plt.title("Virus Recurrence Trends Over Time")
-plt.xlabel("Week")
-plt.ylabel("Number of Cases")
-plt.legend(title="Virus")
-plt.grid()
+plt.grid(axis="y", linestyle="--", alpha=0.7)
 plt.show()
 # Convert 'Pathogen' into a binary target variable (1 = hMPV, 0 = other)
 df['Target_hMPV'] = (df['Pathogen'] == "Human metapneumovirus").astype(int)
